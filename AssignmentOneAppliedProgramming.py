@@ -1,4 +1,7 @@
 #"Applied programming Assignment 1"
+import sqlite3
+
+database = sqlite3.connect("assignment3(2026).db") 
 
 #"User Class"
 #"Defines the class User and its attributes"
