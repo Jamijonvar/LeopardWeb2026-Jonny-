@@ -2,9 +2,10 @@
 import sqlite3
 
 database = sqlite3.connect("assignment3(2026).db") 
+cursor = database.cursor()
 
-#"User Class"
-#"Defines the class User and its attributes"
+#User Class
+#Defines the class User and its attributes
 class User:
     def __init__(self, firstname, lastname, id):
         self.firstname = firstname
@@ -30,35 +31,55 @@ class User:
 #"Student Class"
 #"Defines the Student class and its attributes which are obtained from its parent class User"
 class Student(User):
-    def __init__(self, firstname, lastname, id):
+    def __init__(self, firstname, lastname, id, grad_year, major, email):
         super().__init__(firstname, lastname, id)
-
- #   "Method to print the Students firstname, lastname, and ID"
+        self.grad_year = grad_year
+        self.major = major
+        self.email = email
+        
     def printAll(self):
         return super().printAll()
-
-  #  "Method to search for courses"
+    
     def searchCourses(self):
-        print("Inside search courses method (student)")
+        name = input("Enter last name to search: ")
+        cursor.execute("SELECT * FROM STUDENT WHERE SURNAME = ?", (name,))
+        rows = cursor.fetchall()
+        if rows:
+            for row in rows:
+                print(row)
+        else:
+            print("No student found.")
+        
+    def addCourses(self):
+        cursor.execute(
+            "INSERT OR IGNORE INTO STUDENT VALUES (?, ?, ?, ?, ?, ?)",
+            (self.id, self.firstname, self.lastname, self.grad_year, self.major, self.email)
+        )
+        database.commit()
+        print(f"Student {self.firstname} {self.lastname} added.")
 
-   # "Method to add courses"
-    def addCources(self):
-        print("Inside adding courses method (student)")
-
-    #"Method to drop courses"
     def dropCourses(self):
-        print("Inside the drop courses method (student)")
+        sid = input("Enter student ID to remove: ")
+        cursor.execute("DELETE FROM STUDENT WHERE ID = ?", (sid,))
+        database.commit()
+        print(f"Student {sid} removed.")
 
-    #"Method to print the students schedule"
     def printSchedule(self):
-        print("Inside the print schedule method (student)")
+        cursor.execute("SELECT * FROM STUDENT")
+        rows = cursor.fetchall()
+        print("\n--- All Students ---")
+        for row in rows:
+            print(row)
 
 #"Admin Class"
 #"Defines the Admin class and its attributes which are obtained from its parent class User"
 class Admin(User):
-    def __init__(self, firstname, lastname, id):
+    def __init__(self, firstname, lastname, id, title, office, email):
         super().__init__(firstname, lastname, id)
-
+        self.title = title
+        self.office = office
+        self.email = email
+        
  #   "Method to print the Admins firstname, lastname, and ID"
     def printAll(self):
         return super().printAll()
@@ -89,8 +110,12 @@ class Admin(User):
 
     #"Method to search the roster"
     def searchRoster(self):
-        print("Inside search roster method (admin)")
-
+        cursor.execute("SELECT * FROM ADMIN")
+        rows = cursor.fetchall()
+        print("\n--- Admin Roster ---")
+        for row in rows:
+            print(row)
+            
     #"Method to print the roster"
     def printRoster(self):
         print("Inside print roster method (admin)")
@@ -101,88 +126,150 @@ class Admin(User):
 
     #"Method to print courses"
     def printCourses(self):
-        print("Inside print courses method (admin)")
-
+        cursor.execute("SELECT * FROM COURSE")
+        rows = cursor.fetchall()
+        print("\n--- All Courses ---")
+        for row in rows:
+            print(row)
+            
+    def updateTitle(self, new_title):
+        cursor.execute(
+            "UPDATE ADMIN SET TITLE = ? WHERE NAME = ? AND SURNAME = ?",
+            (new_title, self.firstname, self.lastname)
+        )
+        database.commit()
+        print(f"{self.firstname} {self.lastname}'s title updated to {new_title}.")
+        
 #"Instructor Class"
 #"Defines the Instructor class and its attributes which are obtained from its parent class User"
 class Instructor(User):
-    def __init__(self, firstname, lastname, id):
+    def __init__(self, firstname, lastname, id, title, year_of_hire, department, email):
         super().__init__(firstname, lastname, id)
+        self.title = title
+        self.year_of_hire = year_of_hire
+        self.department = department
+        self.email = email
 
-    #"Method to print the Instructors firstname, lastname, and ID"
     def printAll(self):
         return super().printAll()
 
-    #"Method to print schedule"
     def printSchedule(self):
-        print("Inside print schedule method (Instructor)")
+        cursor.execute("SELECT * FROM INSTRUCTOR")
+        rows = cursor.fetchall()
+        print("\n--- All Instructors ---")
+        for row in rows:
+            print(row)
 
-    #"Method to print class list"
     def classList(self):
         print("Inside print class list method (Instructor)")
 
-    #"Method to search for courses"
     def courseSearch(self):
-        print("Inside course search method (Instructor)")
+        dept = input("Enter department to search: ")
+        cursor.execute("SELECT * FROM INSTRUCTOR WHERE DEPT = ?", (dept,))
+        rows = cursor.fetchall()
+        if rows:
+            for row in rows:
+                print(row)
+        else:
+            print(f"No instructors found in {dept}.")
 
-#"Test cases for the User class"
+    def removeInstructor(self, iid):
+        cursor.execute("DELETE FROM INSTRUCTOR WHERE ID = ?", (iid,))
+        database.commit()
+        print(f"Instructor {iid} removed.")
 
-#"Adds a new User (user1) and sets their firstname, lastname, and ID"
-user1 = User("Sophia", "Johnson", 10000001)
-#"Prints the user1's firstname, lastname, and ID"
-user1.printAll()
+class Course:
+    def __init__(self, crn, title, department, time, days, semester, year, credits):
+        self.crn = crn
+        self.title = title
+        self.department = department
+        self.time = time
+        self.days = days
+        self.semester = semester
+        self.year = year
+        self.credits = credits
 
-#"Test cases for the Student class"
+    def createTable(self):
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS COURSE (
+                CRN INTEGER PRIMARY KEY,
+                title TEXT,
+                department TEXT,
+                time TEXT,
+                days TEXT,
+                semester TEXT,
+                year INTEGER,
+                credits INTEGER
+            )
+        """)
+        database.commit()
+        print("Course table created.")
 
-#"Adds a new Student (student1) and sets their firstname, lastname, and ID"
-student1 = Student("Sarah", "Miller", 100000002)
-#"Prints student1's firstname, lastname, and ID"
-student1.printAll()
-#"Calls the searchCourses method"
-student1.searchCourses()
-#"Calls the addCourses method"
-student1.addCources()
-#"Calls the dropCourses method"
-student1.dropCourses()
-#"Prints student1's schedule"
-student1.printSchedule()
+    def insertCourse(self):
+        cursor.execute(
+            "INSERT OR IGNORE INTO COURSE VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (self.crn, self.title, self.department, self.time, self.days, self.semester, self.year, self.credits)
+        )
+        database.commit()
+        print(f"Course '{self.title}' added.")
 
-#"Test cases for the Admin Class"
+    def printAll(self):
+        cursor.execute("SELECT * FROM COURSE")
+        rows = cursor.fetchall()
+        print("\n--- All Courses ---")
+        for row in rows:
+            print(row)
 
-#"Adds a new Admin (admin1) and sets their firstname, lastname, and ID"
-admin1 = Admin("Tina", "White", 100000003)
-#"Prints the admin1's firstname, lastname, and ID"
-admin1.printAll()
-#"Calls the addCourses method"
-admin1.addCourses()
-#"Calls the removeCourses method"
-admin1.removeCourses()
-#"Calls the addUser method"
-admin1.addUser()
-#"Calls the removeUser method"
-admin1.removeUser()
-#"Calls the addStudent method"
-admin1.addStudent()
-#"Calls the removeStudent method"
-admin1.removeStudent()
-#"Calls the searchRoster method"
-admin1.searchRoster()
-#"Prints the Roster"
-admin1.printRoster()
-#"Calls the searchCourses method"
-admin1.searchCourses()
-#"Prints the courses"
-admin1.printCourses()
+    def matchInstructors(self):
+        cursor.execute("SELECT CRN, title, department FROM COURSE")
+        courses = cursor.fetchall()
+        print("\n--- Course to Instructor Matching ---")
+        for crn, title, dept in courses:
+            cursor.execute("SELECT NAME, SURNAME FROM INSTRUCTOR WHERE DEPT = ?", (dept,))
+            instructors = cursor.fetchall()
+            if instructors:
+                names = ", ".join(f"{r[0]} {r[1]}" for r in instructors)
+                print(f"{title} (CRN {crn}, {dept}) -> {names}")
+            else:
+                print(f"{title} (CRN {crn}, {dept}) -> NO MATCHING INSTRUCTOR")
+                
+                
+                
+# Create course table
+c = Course(None, None, None, None, None, None, None, None)
+c.createTable()
 
-#"Test cases for the Instructor Class"
+# Add 2 students
+s1 = Student("Jonny", "Wolf", 10011, 2027, "BSCE", "wolfj")
+s2 = Student("Sarah", "Connor", 10012, 2028, "BSEE", "connors")
+s1.addCourses()
+s2.addCourses()
 
-#"Adds a new Instructor (instructor1) and sets their firstname, lastname, and ID"
-instructor1 = Instructor("Ruby", "Smith", 100000004)
-#"Prints the instructor1's firstname, lastname, and ID"
-instructor1.printAll()
-#"Prints instructor1's schedule"
-instructor1.printSchedule()
-#"Prints instructor1's class list"
-instructor1.classList()
-#"Calls the courseSearch method"
-instructor1.courseSearch()
+# Remove 1 instructor (Daniel Bernoulli, ID 20006)
+i = Instructor("Daniel", "Bernoulli", 20006, "Associate Prof.", 1760, "BSME", "bernoullid")
+i.removeInstructor(20006)
+
+# Update Vera Rubin's title to Vice-President
+a = Admin("Vera", "Rubin", 30002, "Registrar", "Wentworth 101", "rubinv")
+a.updateTitle("Vice-President")
+
+# Add 5 courses
+courses = [
+    Course(40001, "Circuit Analysis",    "BSEE", "9:00 AM",  "MWF", "Fall", 2026, 3),
+    Course(40002, "Algorithms",          "BSCO", "11:00 AM", "TR",  "Fall", 2026, 3),
+    Course(40003, "Applied Mathematics", "BSAS", "1:00 PM",  "MWF", "Fall", 2026, 3),
+    Course(40004, "Operating Systems",   "BCOS", "3:00 PM",  "TR",  "Fall", 2026, 3),
+    Course(40005, "Humanities Elective", "HUSS", "10:00 AM", "MWF", "Fall", 2026, 3),
+]
+for course in courses:
+    course.insertCourse()
+
+# Print everything to verify
+s1.printSchedule()
+i.printSchedule()
+a.printRoster()
+c.printAll()
+c.matchInstructors()
+
+database.close()
+
