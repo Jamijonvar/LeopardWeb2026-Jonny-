@@ -118,7 +118,7 @@ class Admin(User):
             
     #"Method to print the roster"
     def printRoster(self):
-        print("Inside print roster method (admin)")
+        self.searchRoster()
 
     #"Method to search courses"
     def searchCourses(self):
